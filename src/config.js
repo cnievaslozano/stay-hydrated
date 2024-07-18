@@ -6,12 +6,14 @@ import {
 let config = {
   dailyGoal: 2000, // default
   glassCapacity: 250, // default
+  streak: 2,
+  totalWater: 1000,
 };
 
 export const loadConfig = async () => {
   const storedConfig = await getStoredConfig();
   if (storedConfig) {
-    config = storedConfig;
+    config = { ...config, ...storedConfig };
   }
 };
 

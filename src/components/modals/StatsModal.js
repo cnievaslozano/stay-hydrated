@@ -1,8 +1,25 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Modal, Pressable } from "react-native";
 import { modalStyles } from "./modalStyles";
+import { getConfig } from "../../config";
 
 export const StatsModal = ({ isVisible, onClose }) => {
+  const [streak, setStreak] = useState("");
+  const [totalWater, setTotalWater] = useState("");
+
+  // When component is rendered
+  useEffect(() => {
+    const loadInitialConfig = async () => {
+      const config = getConfig();
+      if (config) {
+        setStreak(config.streak?.toString() || "0");
+        setTotalWater(config.totalWater?.toString() || "0");
+      }
+    };
+
+    loadInitialConfig();
+  }, []);
+
   return (
     <Modal
       visible={isVisible}
@@ -11,7 +28,15 @@ export const StatsModal = ({ isVisible, onClose }) => {
       onRequestClose={onClose}
     >
       <View style={modalStyles.modalView}>
-        <Text style={modalStyles.modalText}>Stats Modal</Text>
+        <Text style={modalStyles.modalTitle}>Stats </Text>
+
+        {/* Streak and Total Water Stats */}
+        <Text style={modalStyles.modalText}>Streak: {streak} days</Text>
+        <Text style={modalStyles.modalText}>
+          Total Water Consumed: {totalWater} ml
+        </Text>
+
+        {/* Close Button */}
         <Pressable
           style={[modalStyles.button, modalStyles.buttonClose]}
           onPress={onClose}
