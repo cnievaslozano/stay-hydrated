@@ -1,10 +1,12 @@
+/* eslint-disable no-undef */
 import React, { useRef, useState, useEffect } from "react";
 import { Animated, Pressable, StyleSheet, Text } from "react-native";
-import { getConfig } from "../config";
+import { updateConfig, getConfig } from "../config";
 
 const iconBottle = require("../assets/bottle-water.png");
 
 export const Bottle = () => {
+  // states
   const [isPressable, setIsPressable] = useState(true);
   const [waterConsumed, setWaterConsumed] = useState(0);
   const [config, setConfig] = useState(getConfig());
@@ -18,11 +20,18 @@ export const Bottle = () => {
     return () => clearInterval(configUpdateInterval);
   }, []);
 
-  const increaseWater = () => {
+  // handlers
+  const handleIncreaseWater = async () => {
     setIsPressable(false);
-    setWaterConsumed(
-      (prevWaterConsumed) => prevWaterConsumed + config.glassCapacity,
-    );
+
+    // Update totalWater in client
+    const newWaterConsumed = waterConsumed + config.glassCapacity;
+    setWaterConsumed(newWaterConsumed);
+
+    // Update totalWater in config
+    const newTotalWater = config.totalWater + config.glassCapacity;
+    await updateConfig({ totalWater: newTotalWater });
+
     Animated.sequence([
       Animated.timing(scaleValue, {
         toValue: 1.2,
@@ -37,22 +46,26 @@ export const Bottle = () => {
     ]).start(() => setIsPressable(true));
   };
 
-  const decrementWater = () => {
+  const handleDecrementWater = async () => {
     if (waterConsumed - config.glassCapacity <= 0) return setWaterConsumed(0);
-    setWaterConsumed(
-      (prevWaterConsumed) => prevWaterConsumed - config.glassCapacity,
-    );
+
+    const newWaterConsumed = waterConsumed - config.glassCapacity;
+    setWaterConsumed(newWaterConsumed);
+
+    // Update totalWater in config
+    const newTotalWater = Math.max(0, config.totalWater - config.glassCapacity);
+    await updateConfig({ totalWater: newTotalWater });
   };
 
   return (
     <>
-      <Pressable onPress={isPressable ? increaseWater : null}>
+      <Pressable onPress={isPressable ? handleIncreaseWater : null}>
         <Animated.Image
           source={iconBottle}
           style={[styles.image, { transform: [{ scale: scaleValue }] }]}
         />
       </Pressable>
-      <Pressable onPress={decrementWater}>
+      <Pressable onPress={handleDecrementWater}>
         <Text style={styles.decrementButton}>- {config.glassCapacity} ml</Text>
       </Pressable>
       <Text style={styles.counterLiters}>
