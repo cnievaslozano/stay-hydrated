@@ -9,16 +9,18 @@ export const StatsModal = ({ isVisible, onClose }) => {
 
   // When component is rendered
   useEffect(() => {
-    const loadInitialConfig = async () => {
+    const loadStats = async () => {
       const config = getConfig();
       if (config) {
-        setStreak(config.streak?.toString() || "0");
-        setTotalWater(config.totalWater?.toString() || "0");
+        setStreak(config.streak || "0");
+        setTotalWater(config.totalWater || "0");
       }
     };
 
-    loadInitialConfig();
-  }, []);
+    if (isVisible) {
+      loadStats();
+    }
+  }, [isVisible]);
 
   return (
     <Modal
