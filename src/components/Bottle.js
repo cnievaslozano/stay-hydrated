@@ -1,63 +1,51 @@
-/* eslint-disable no-undef */
 import React, { useRef, useState, useEffect } from "react";
 import { Animated, Pressable, StyleSheet, Text } from "react-native";
 import { Audio } from "expo-av";
 import { updateConfig, getConfig } from "../config";
 
 const iconBottle = require("../assets/bottle-water.png");
-const waterSound = require("../assets/water-sound.mp3");
+const increaseWaterSound = require("../assets/water-sound.mp3");
+const decreaseWaterSound = require("../assets/decreaseWater-sound.mp3");
 
-export const Bottle = () => {
+export const Bottle = ({ flashBorderColor }) => {
   // states
   const [isPressable, setIsPressable] = useState(true);
   const [waterConsumed, setWaterConsumed] = useState(0);
   const [config, setConfig] = useState(getConfig());
   const scaleValue = useRef(new Animated.Value(1)).current;
-  const sound = useRef(new Audio.Sound());
+  const increaseSound = useRef(new Audio.Sound());
+  const decreaseSound = useRef(new Audio.Sound());
 
-  // update config
   useEffect(() => {
+    const loadSound = async () => {
+      try {
+        await increaseSound.current.loadAsync(increaseWaterSound);
+        await decreaseSound.current.loadAsync(decreaseWaterSound);
+      } catch (error) {
+        console.log("Error loading sound: ", error);
+      }
+    };
+
+    const unloadSound = async () => {
+      try {
+        await increaseSound.current.unloadAsync();
+        await decreaseSound.current.unloadAsync();
+      } catch (error) {
+        console.log("Error unloading sound: ", error);
+      }
+    };
+
     const configUpdateInterval = setInterval(() => {
       setConfig(getConfig());
     }, 1000);
 
-    return () => clearInterval(configUpdateInterval);
-  }, []);
-
-  // sound effect
-  useEffect(() => {
     loadSound();
+
     return () => {
+      clearInterval(configUpdateInterval);
       unloadSound();
     };
   }, []);
-
-  // load sound
-  const loadSound = async () => {
-    try {
-      await sound.current.loadAsync(waterSound);
-    } catch (error) {
-      console.log("Error loading sound: ", error);
-    }
-  };
-
-  // unload sound
-  const unloadSound = async () => {
-    try {
-      await sound.current.unloadAsync();
-    } catch (error) {
-      console.log("Error unloading sound: ", error);
-    }
-  };
-
-  // play audio
-  const playSound = async () => {
-    try {
-      await sound.current.replayAsync();
-    } catch (error) {
-      console.log("Error playing sound: ", error);
-    }
-  };
 
   // handlers
   const handleIncreaseWater = async () => {
@@ -84,10 +72,14 @@ export const Bottle = () => {
       }),
     ]).start(() => setIsPressable(true));
 
-    await playSound();
+    await playIncreaseSound();
+    flashBorderColor(true);
   };
 
   const handleDecrementWater = async () => {
+    await playDecreaseSound();
+    flashBorderColor(false);
+
     if (waterConsumed - config.glassCapacity <= 0) return setWaterConsumed(0);
 
     const newWaterConsumed = waterConsumed - config.glassCapacity;
@@ -96,6 +88,23 @@ export const Bottle = () => {
     // Update totalWater in config
     const newTotalWater = Math.max(0, config.totalWater - config.glassCapacity);
     await updateConfig({ totalWater: newTotalWater });
+  };
+
+  // play audio
+  const playIncreaseSound = async () => {
+    try {
+      await increaseSound.current.replayAsync();
+    } catch (error) {
+      console.log("Error playing increase sound: ", error);
+    }
+  };
+
+  const playDecreaseSound = async () => {
+    try {
+      await decreaseSound.current.replayAsync();
+    } catch (error) {
+      console.log("Error playing decrease sound: ", error);
+    }
   };
 
   return (
